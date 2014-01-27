@@ -5,13 +5,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import com.yuval.Application;
 
 @Configuration
+@ImportResource(value = "classpath:application-context.xml")
 @ComponentScan(basePackageClasses = Application.class, excludeFilters = @Filter({Controller.class, Configuration.class}))
 class ApplicationConfig {
 	
@@ -22,10 +23,4 @@ class ApplicationConfig {
 		return ppc;
 	}
 
-    @Bean
-	public static org.springframework.web.multipart.commons.CommonsMultipartResolver multipartResolver() {
-        CommonsMultipartResolver c = new CommonsMultipartResolver();
-
-        return c;
-    }
 }

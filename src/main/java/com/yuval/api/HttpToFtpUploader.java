@@ -9,24 +9,19 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.springframework.stereotype.Component;
 
 import com.google.common.io.ByteStreams;
 
-public class HttpToFtpUploader implements Uploader {
+
+@Component
+public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 	private static final int TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
 	private String folder;
-	private String server;
-	private String username;
-	private String password;
-	private String baseDir;
+	private static final String baseDir = "yuval";
 
-	public HttpToFtpUploader(String folder) throws IOException {
-		this.folder = folder;
-		this.server = "intigua.hostedftp.com";
-		this.username = "oran.epelbaum@intigua.com";
-		this.password = "hza346NS!";
-		this.baseDir = "yuval";
-		this.folder = folder;
+	@Override
+	public void createUploader(String name, Object metadata) throws IOException {
 
 		FTPClient ftpClient = createFTPClient();
 		try {
@@ -37,14 +32,34 @@ public class HttpToFtpUploader implements Uploader {
 		} finally {
 			ftpClient.disconnect();
 		}
+
+	}
+	@Override
+	public Uploader getUploader(String name) throws IOException {
+		return new HttpToFtpUploader(name);
+	}
+
+	public HttpToFtpUploader() throws IOException {
+		
+	}
+
+	public HttpToFtpUploader(String folder) throws IOException {
+		this.folder = folder;
+
 	}
 	
 	@Override
 	public void upload(String name, InputStream is) throws IOException {
 		FTPClient ftpClient = createFTPClient();
 		try {
-	        ftpClient.changeWorkingDirectory(baseDir);
-	        ftpClient.changeWorkingDirectory(folder);
+	        boolean cdSucess = ftpClient.changeWorkingDirectory(baseDir);
+	        if (!cdSucess) {
+	        	throw new IllegalArgumentException("No such dir!");
+	        }
+	        cdSucess = ftpClient.changeWorkingDirectory(folder);
+	        if (!cdSucess) {
+	        	throw new IllegalArgumentException("No such dir!");
+	        }
 	        
 	        ftpClient.setSoTimeout(TIMEOUT);
 	        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
@@ -63,12 +78,16 @@ public class HttpToFtpUploader implements Uploader {
 	}
 
 	private FTPClient createFTPClient() throws SocketException, IOException {
+        String server = "intigua.hostedftp.com";
+        String username = "oran.epelbaum@intigua.com";
+        String password = "hza346NS!";
+
+        
 		FTPClient ftpClient = new FTPClient();
 
         ftpClient.setDataTimeout(TIMEOUT);
         ftpClient.setConnectTimeout(TIMEOUT);
         ftpClient.setDefaultTimeout(TIMEOUT);
-
         ftpClient.connect(server);
         ftpClient.enterLocalPassiveMode();
         ftpClient.login(username, password);
@@ -81,5 +100,6 @@ public class HttpToFtpUploader implements Uploader {
         }
 		return ftpClient;
 	}
+
 
 }
