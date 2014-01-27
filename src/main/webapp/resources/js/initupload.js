@@ -31,4 +31,21 @@ $(function () {
     );
 
 
+    $('#fileupload').addClass('fileupload-processing');
+    $.ajax({
+        // Uncomment the following to send cross-domain cookies:
+        //xhrFields: {withCredentials: true},
+        url: $('#uploadapientry')[0].href,
+        dataType: 'json',
+        type: 'POST',
+        context: $('#fileupload')[0]
+    }).always(function () {
+        $(this).removeClass('fileupload-processing');
+    }).done(function (result) {
+
+        $(this).fileupload('option', 'url', result["_links"]["self"]["href"]);
+        $(this).fileupload('option', 'done')
+            .call(this, $.Event('done'), {result: result});
+    });
+
 });

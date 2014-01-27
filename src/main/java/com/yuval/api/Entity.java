@@ -1,41 +1,36 @@
 package com.yuval.api;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
 abstract public class Entity {
 
     @JsonProperty("_links")
-	private Collection<Link> links;
+	private Map<String, Link> links;
 
-	public Collection<Link> getLinks() {
+	public Map<String, Link> getLinks() {
 		return links;
 	}
 
-	public void addLinks(Collection<Link> links) {
-		this.links.addAll(links);
+	public void addLinks(Map<String, Link> links) {
+		this.links.putAll(links);
 	}
 
 	public void addLink(String rel, String url) {
 		if (links == null) {
-			links = new ArrayList<Link>();
+			links = new HashMap<>();
 		}
 		Link link = new Link();
-		link.setRel(rel);
 		link.setHref(url);
-		links.add(link);
+		links.put(rel, link);
 	}
 	
 
 	public Link getLink(String rel) {
-		if (links != null) {
-			for (Link link : links) {
-				if (rel.equals(link.getRel())) {
-					return link;
-				}
-			}
+		if (links.containsKey(rel)) {
+			return links.get(rel);
 		}
 		return null;
 	}

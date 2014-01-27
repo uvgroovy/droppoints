@@ -17,8 +17,8 @@ import com.google.common.io.ByteStreams;
 @Component
 public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 	private static final int TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
-	private String folder;
 	private static final String baseDir = "yuval";
+	private String folder;
 
 	@Override
 	public void createUploader(String name, Object metadata) throws IOException {
@@ -26,9 +26,16 @@ public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 		FTPClient ftpClient = createFTPClient();
 		try {
 	        ftpClient.makeDirectory(baseDir);
-	        ftpClient.changeWorkingDirectory(baseDir);
-	        ftpClient.makeDirectory(folder);
-	        ftpClient.changeWorkingDirectory(folder);
+	        boolean cdSucess = ftpClient.changeWorkingDirectory(baseDir);
+	        if (!cdSucess) {
+	        	throw new IllegalArgumentException("No such dir!");
+	        }
+	        
+	        ftpClient.makeDirectory(name);
+	        cdSucess = ftpClient.changeWorkingDirectory(name);
+	        if (!cdSucess) {
+	        	throw new IllegalArgumentException("No such dir!");
+	        }
 		} finally {
 			ftpClient.disconnect();
 		}
