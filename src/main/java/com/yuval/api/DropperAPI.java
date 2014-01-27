@@ -37,24 +37,31 @@ public class DropperAPI {
 
 	
 	@RequestMapping(value = URL_TRANSACTION, method = RequestMethod.POST, consumes="multipart/form-data")
-	public ResponseEntity<Map<String, Object>>  addFile(@PathVariable String tid, @RequestParam("files[]") MultipartFile file) throws IOException {
-		Map<String, Object> h = new HashMap<>();
-		Map<String, Object> m = new HashMap<>();
-		m.put("name", file.getOriginalFilename());
-		m.put("size", file.getSize());
-		h.put("files", Arrays.asList(m));
+	public ResponseEntity<ResultFiles>  addFile(@PathVariable String tid, @RequestParam("files[]") MultipartFile file) throws IOException {
+		
+		
 		switch(tid) {
 		case "test-ok":
-			return new ResponseEntity<>(h, HttpStatus.CREATED);
+			return new ResponseEntity<>(getResultFiles(file), HttpStatus.CREATED);
 		case "test-fail":
 			throw new IllegalArgumentException();
 		}
 		
 		UploaderFactory uploader = getUploaderForTransaction(tid);
 		uploader.getUploader(""+tid).upload(file.getOriginalFilename(), file.getInputStream());
-		return null;
+		return new ResponseEntity<>(getResultFiles(file), HttpStatus.CREATED);
 	}
 	
+	private ResultFiles getResultFiles(MultipartFile file) {
+		ResultFiles files = new ResultFiles();
+		ResultFile rf = new ResultFile();
+		rf.setName(file.getOriginalFilename());
+		rf.setSize(rf.getSize());
+		files.getFiles().add(rf);
+		return files;
+	}
+
+
 	private UploaderFactory getUploaderForTransaction(String id) throws IOException {
 		return new HttpToFtpUploader(id);
 	}
