@@ -11,7 +11,6 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpEntity;
@@ -49,7 +48,7 @@ public class DropperAPI {
 	@Inject
 	TransactionRepository transactionRepository;
 
-	private static Set<String> REQUIRED_META_DATA = Sets.newHashSet("Name");
+	private static Set<String> REQUIRED_META_DATA = Sets.newHashSet("name");
 
 	@RequestMapping(method = RequestMethod.OPTIONS)
 	public HttpEntity<Collection<String>> getMetaDataForTransaction()
@@ -62,8 +61,8 @@ public class DropperAPI {
 	}
 
 	@RequestMapping(method = RequestMethod.POST)
-	public HttpEntity<Transaction> newTransaction(@RequestBody Map<String, Object> requestJson)
-			throws IOException {
+	public HttpEntity<Transaction> newTransaction(
+			@RequestBody Map<String, Object> requestJson) throws IOException {
 
 		validateMetaData(requestJson);
 
@@ -94,7 +93,10 @@ public class DropperAPI {
 	}
 
 	private void validateMetaData(Map<String, Object> requestJson) {
-
+		if (!requestJson.keySet().containsAll(REQUIRED_META_DATA)) {
+			throw new IllegalArgumentException(
+					"Missign metadata for transaction!");
+		}
 	}
 
 	@RequestMapping(value = URL_TRANSACTION, method = RequestMethod.POST, consumes = "multipart/form-data")

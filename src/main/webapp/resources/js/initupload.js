@@ -25,9 +25,12 @@ function getLink(obj, rel) {
 	return null;
 }
 
-function initUpload() {
+
+var initDoneOnce = false;
+
+function initUpload(mt, fn) {
   $('#fileupload').addClass('fileupload-processing');
-  var metadata = {name : 'yuval'};
+  var metadata = mt;
   $.ajax({
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
@@ -40,13 +43,32 @@ function initUpload() {
     }).always(function () {
         $(this).removeClass('fileupload-processing');
     }).done(function (result) {
-
+    	initDoneOnce = true;
         $(this).fileupload('option', 'url', getLink(result,"self"));
         $(this).fileupload('option', 'done')
             .call(this, $.Event('done'), {result: result});
+        if (fn) {
+        	fn();
+        }
+    }).fail(function() {
+    	$("#uploader-name")[0].disabled = false;
     });
 }
 
+function uploadNow() {
+	submitForm = function() {$('button.start')[0].click();};
+	if (!initDoneOnce) {
+		var nameInput = $("#uploader-name")[0];
+		if (nameInput.value.length == 0) {
+			alert("Please provide a name");
+			return;
+		}
+		initUpload({name: nameInput.value}, submitForm);
+		nameInput.disabled = true;
+	} else {
+		submitForm();
+	}
+}
 $(function () {
     'use strict';
 
@@ -66,6 +88,6 @@ $(function () {
         )
     );
 
-   initUpload();
+   //initUpload();
   
 });

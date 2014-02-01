@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -73,7 +75,8 @@ public class DropperAPITest {
 	public void shouldNewTransactionWork() throws IOException, URISyntaxException {
 		
 		//new HashMap<String, String>()
-		HttpServletRequest request = null;
+		Map<String, Object> request = new HashMap<>();
+		request.put("name","d");
 		
 
 		URI uri = new URI("f:123");

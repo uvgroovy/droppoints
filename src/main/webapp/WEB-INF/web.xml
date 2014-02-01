@@ -6,4 +6,13 @@
 	<error-page>
     	<location>/generalError</location>
 	</error-page>
+	<filter>
+	   <filter-name>SimpleCORSFilter</filter-name>
+	   <filter-class>com.yuval.config.SimpleCORSFilter</filter-class>
+	</filter>
+
+  <filter-mapping> 
+    <filter-name>SimpleCORSFilter</filter-name>
+    <url-pattern>/api/*</url-pattern> 
+  </filter-mapping> 
 </web-app>
