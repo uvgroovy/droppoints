@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.net.ftp.FTP;
@@ -19,10 +21,17 @@ public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 	private static final int TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
 	private static final String baseDir = "yuval";
 	private String folder;
+	private String server = "intigua.hostedftp.com";;
 
 	@Override
-	public void createUploader(String name, Object metadata) throws IOException {
-
+	public URI createUploader(String name, Object metadata) throws IOException {
+		URI uri;
+		try {
+			uri = new URI("ftpprovider", name, null);
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException(e);
+		}
+		
 		FTPClient ftpClient = createFTPClient();
 		try {
 	        ftpClient.makeDirectory(baseDir);
@@ -36,22 +45,23 @@ public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 	        if (!cdSucess) {
 	        	throw new IllegalArgumentException("No such dir!");
 	        }
+	        return uri;
 		} finally {
 			ftpClient.disconnect();
 		}
 
 	}
 	@Override
-	public Uploader getUploader(String name) throws IOException {
-		return new HttpToFtpUploader(name);
+	public Uploader getUploader(URI uri) throws IOException {
+		return new HttpToFtpUploader(uri);
 	}
 
 	public HttpToFtpUploader() throws IOException {
 		
 	}
 
-	public HttpToFtpUploader(String folder) throws IOException {
-		this.folder = folder;
+	public HttpToFtpUploader(URI uri) throws IOException {
+		this.folder = uri.getPath();
 
 	}
 	
@@ -85,7 +95,7 @@ public class HttpToFtpUploader implements Uploader,  UploaderFactory {
 	}
 
 	private FTPClient createFTPClient() throws SocketException, IOException {
-        String server = "intigua.hostedftp.com";
+
         String username = "oran.epelbaum@intigua.com";
         String password = "hza346NS!";
 

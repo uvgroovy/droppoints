@@ -1,10 +1,10 @@
-package com.yuval.api;
+package com.yuval.api.resources;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ResultFiles {
-	List<ResultFile> files = new ArrayList<>();
+	private List<ResultFile> files = new ArrayList<>();
 	
 	public List<ResultFile> getFiles() {
 		return files;

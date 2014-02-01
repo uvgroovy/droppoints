@@ -11,6 +11,42 @@
 
 /* global $, window */
 
+function getLink(obj, rel) {
+	if('_links' in obj) {
+		return obj["_links"][rel]["href"];
+	}
+	
+	for (var i = 0; i < obj["links"].length; i++) {
+	    var link = obj["links"][i];
+	    if (link["rel"] == rel) {
+	    	return link["href"];
+	    }
+	}
+	return null;
+}
+
+function initUpload() {
+  $('#fileupload').addClass('fileupload-processing');
+  var metadata = {name : 'yuval'};
+  $.ajax({
+        // Uncomment the following to send cross-domain cookies:
+        //xhrFields: {withCredentials: true},
+        url: $('#uploadapientry')[0].href,
+        dataType: 'json',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(metadata),
+        type: 'POST',
+        context: $('#fileupload')[0]
+    }).always(function () {
+        $(this).removeClass('fileupload-processing');
+    }).done(function (result) {
+
+        $(this).fileupload('option', 'url', getLink(result,"self"));
+        $(this).fileupload('option', 'done')
+            .call(this, $.Event('done'), {result: result});
+    });
+}
+
 $(function () {
     'use strict';
 
@@ -30,22 +66,6 @@ $(function () {
         )
     );
 
-
-    $('#fileupload').addClass('fileupload-processing');
-    $.ajax({
-        // Uncomment the following to send cross-domain cookies:
-        //xhrFields: {withCredentials: true},
-        url: $('#uploadapientry')[0].href,
-        dataType: 'json',
-        type: 'POST',
-        context: $('#fileupload')[0]
-    }).always(function () {
-        $(this).removeClass('fileupload-processing');
-    }).done(function (result) {
-
-        $(this).fileupload('option', 'url', result["_links"]["self"]["href"]);
-        $(this).fileupload('option', 'done')
-            .call(this, $.Event('done'), {result: result});
-    });
-
+   initUpload();
+  
 });
