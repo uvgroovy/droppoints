@@ -16,6 +16,7 @@ public class UploaderMetadata extends LinkedHashMap<String, String> {
 			sb.append(entry.getKey());
 			sb.append(":");
 			sb.append(entry.getValue());
+			sb.append('\n');
 		}
 		
 		return sb.toString();
