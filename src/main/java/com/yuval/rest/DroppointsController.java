@@ -2,11 +2,14 @@ package com.yuval.rest;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
@@ -34,11 +37,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.yuval.api.Uploader;
 import com.yuval.api.UploaderFactory;
-import com.yuval.model.DbDroppoints;
+import com.yuval.api.UploaderMetadata;
+import com.yuval.model.DbDroppoint;
 import com.yuval.model.DroppointRepository;
+import com.yuval.rest.resources.Droppoint;
 import com.yuval.rest.resources.ResultFile;
 import com.yuval.rest.resources.ResultFiles;
-import com.yuval.rest.resources.Droppoint;
 
 @Controller
 @RequestMapping(value = DroppointsController.REQUEST_PATH)
@@ -46,7 +50,7 @@ public class DroppointsController {
 
 	private static final String NAME = "name";
 
-	static final String REQUEST_PATH = "/api/drops";
+	static final String REQUEST_PATH = "/api/droppoints";
 
 	static final String URL_TRANSACTION = "/{tid}";
 
@@ -70,12 +74,12 @@ public class DroppointsController {
 	}
 
 	@RequestMapping(method = RequestMethod.POST)
-	public HttpEntity<Droppoint> newTransaction(
-			@RequestBody Droppoint requestJson) throws IOException {
+	public HttpEntity<Droppoint> newDroppoint(@RequestBody Droppoint requestJson)
+			throws IOException {
 
-		DbDroppoints dbT = validateAndSetMetaData(requestJson);
+		DbDroppoint dbT = validateAndSetMetaData(requestJson);
 
-		URI url = createRemoteUploadLocation();
+		URI url = createRemoteUploadLocation(requestJson);
 		dbT.setBackEndUrl(url);
 
 		dbT = transactionRepository.save(dbT);
@@ -92,14 +96,16 @@ public class DroppointsController {
 		return new ResponseEntity<>(obj, responseHeaders, HttpStatus.CREATED);
 	}
 
-	private URI createRemoteUploadLocation() throws IOException {
+	private URI createRemoteUploadLocation(Droppoint dbT) throws IOException {
 		String folderName = String.format("%s-%d", new Date().toString(),
 				new Random().nextLong() % 1000);
-		URI url = uploaderFactory.createUploader(folderName, null);
+
+		UploaderMetadata metadata = new UploaderMetadata(dbT.getUploaderName());
+		URI url = uploaderFactory.initUploader(folderName, metadata);
 		return url;
 	}
 
-	private Droppoint convertToJsonModel(DbDroppoints dbT) {
+	private Droppoint convertToJsonModel(DbDroppoint dbT) {
 		Droppoint t = new Droppoint();
 		// set meta-data
 		// never send out the backend url as it is private
@@ -114,12 +120,12 @@ public class DroppointsController {
 		return t;
 	}
 
-	private DbDroppoints validateAndSetMetaData(Droppoint requestJson) {
+	private DbDroppoint validateAndSetMetaData(Droppoint requestJson) {
 		Preconditions.checkArgument(
 				!Strings.isNullOrEmpty(requestJson.getUploaderName()),
 				"Missign metadata for transaction!");
 
-		DbDroppoints t = new DbDroppoints();
+		DbDroppoint t = new DbDroppoint();
 		t.setUploaderName(requestJson.getUploaderName());
 		return t;
 	}
@@ -127,6 +133,8 @@ public class DroppointsController {
 	@RequestMapping(value = URL_TRANSACTION, method = RequestMethod.POST, consumes = "multipart/form-data")
 	public HttpEntity<ResultFiles> addFile(@PathVariable String tid,
 			@RequestParam("files[]") MultipartFile file) throws IOException {
+
+		validatePathDoesntTraverse(file.getOriginalFilename());
 
 		switch (tid) {
 		case "test-ok":
@@ -136,14 +144,21 @@ public class DroppointsController {
 			throw new IllegalArgumentException();
 		}
 
-		DbDroppoints t = transactionRepository.get(Long.parseLong(tid));
+		DbDroppoint t = transactionRepository.get(Long.parseLong(tid));
 
 		try (InputStream fileInputStream = file.getInputStream();
-				Uploader uploader = uploaderFactory.getUploader(t
+				Uploader uploader = uploaderFactory.createUploader(t
 						.getBackEndUrl())) {
 			uploader.upload(file.getOriginalFilename(), fileInputStream);
 		}
 		return new ResponseEntity<>(getResultFiles(file), HttpStatus.CREATED);
+	}
+
+	private void validatePathDoesntTraverse(String originalFilename) {
+		Path parentDir = new File("test-dir").toPath();
+		Path subFile = parentDir.resolve(originalFilename).normalize();
+		Preconditions.checkArgument(
+				Objects.equals(parentDir, subFile.getParent()), "Bad filename");
 	}
 
 	private ResultFiles getResultFiles(MultipartFile file) {

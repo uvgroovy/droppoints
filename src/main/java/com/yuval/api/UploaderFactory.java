@@ -5,7 +5,7 @@ import java.net.URI;
 
 public interface UploaderFactory {
 	
-	public URI createUploader(String folderName, Object metadata) throws IOException;
+	public URI initUploader(String folderName, UploaderMetadata metadata) throws IOException;
 	
-	public Uploader getUploader(URI uri) throws IOException;
+	public Uploader createUploader(URI uri) throws IOException;
 }

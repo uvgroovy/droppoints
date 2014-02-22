@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @SuppressWarnings("serial")
 @Entity
 @Table(name = "droppoints")
-public class DbDroppoints implements Serializable {
+public class DbDroppoint implements Serializable {
 
 	@Id
 	@GeneratedValue

@@ -1,6 +1,8 @@
 package com.yuval.api.impl.ftp;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +14,7 @@ import org.apache.commons.net.ftp.FTPReply;
 import com.google.common.base.Preconditions;
 import com.yuval.api.Uploader;
 import com.yuval.api.UploaderFactory;
+import com.yuval.api.UploaderMetadata;
 
 public class FtpUploaderFactory implements UploaderFactory {
 	private static final int TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
@@ -34,7 +37,8 @@ public class FtpUploaderFactory implements UploaderFactory {
 	}
 
 	@Override
-	public URI createUploader(String name, Object metadata) throws IOException {
+	public URI initUploader(String name, UploaderMetadata metadata)
+			throws IOException {
 		URI uri;
 		try {
 			uri = new URI("ftpprovider", name, null);
@@ -55,6 +59,9 @@ public class FtpUploaderFactory implements UploaderFactory {
 			if (!cdSucess) {
 				throw new IllegalArgumentException("No such dir!");
 			}
+
+			writeMetadataIfNeeded(metadata, ftpClient);
+
 			return uri;
 		} finally {
 			ftpClient.disconnect();
@@ -62,8 +69,23 @@ public class FtpUploaderFactory implements UploaderFactory {
 
 	}
 
+	private void writeMetadataIfNeeded(UploaderMetadata metadata, FTPClient ftpClient)
+			throws SocketException, IOException, UnsupportedEncodingException {
+		if (metadata != null) {
+			// write metadata
+			// don't close the resource, intentionally, is the ftpclient will be closed later.
+			@SuppressWarnings("resource")
+			FtpUploader u = new FtpUploader(ftpClient);
+			try (ByteArrayInputStream in = new ByteArrayInputStream(
+					metadata.toString().getBytes("UTF8"))) {
+				u.upload("metadata.txt", in);
+
+			}
+		}
+	}
+
 	@Override
-	public Uploader getUploader(URI uri) throws IOException {
+	public Uploader createUploader(URI uri) throws IOException {
 		final String folder = uri.getPath();
 		FTPClient ftpClient = null;
 		try {

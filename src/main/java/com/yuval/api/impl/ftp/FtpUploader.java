@@ -7,7 +7,6 @@ import java.net.SocketException;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
-import org.springframework.stereotype.Component;
 
 import com.google.common.io.ByteStreams;
 import com.yuval.api.Uploader;

@@ -1,7 +1,7 @@
 package com.yuval.rest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -35,7 +35,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.yuval.api.Uploader;
 import com.yuval.api.UploaderFactory;
-import com.yuval.model.DbDroppoints;
+import com.yuval.api.UploaderMetadata;
+import com.yuval.model.DbDroppoint;
 import com.yuval.model.DroppointRepository;
 import com.yuval.rest.DroppointsController;
 import com.yuval.rest.resources.ResultFiles;
@@ -57,7 +58,7 @@ public class DroppointsControllerTest {
 	DroppointRepository transactionRepository;
 	
     @Captor
-    ArgumentCaptor<String> captor;
+    ArgumentCaptor<UploaderMetadata> metadataCaptor;
 
     @Before
     public void init() {
@@ -74,30 +75,68 @@ public class DroppointsControllerTest {
 		
 		//new HashMap<String, String>()
 		Droppoint request = new Droppoint();
-		request.setUploaderName("d");
+		String uploaderName = "d";
+		request.setUploaderName(uploaderName);
 		
 
 		URI uri = new URI("f:123");
-		when(uploadFactory.createUploader(anyString(), any())).thenReturn(uri);
+		when(uploadFactory.initUploader(anyString(), any(UploaderMetadata.class))).thenReturn(uri);
 		
 		final Long dbId = 1L;
-		DbDroppoints anyT = Matchers.any(DbDroppoints.class);
-		when(transactionRepository.save(anyT)).thenAnswer(new Answer<DbDroppoints>() {
+		DbDroppoint anyT = Matchers.any(DbDroppoint.class);
+		when(transactionRepository.save(anyT)).thenAnswer(new Answer<DbDroppoint>() {
 
 			@Override
-			public DbDroppoints answer(InvocationOnMock invocation) throws Throwable {
-				DbDroppoints t = (DbDroppoints)invocation.getArguments()[0];
+			public DbDroppoint answer(InvocationOnMock invocation) throws Throwable {
+				DbDroppoint t = (DbDroppoint)invocation.getArguments()[0];
 				t.setId(dbId);
 				return t;
 			}
 		});
 		
 		// test
-		HttpEntity<Droppoint> t = dropperApi.newTransaction(request);
+		HttpEntity<Droppoint> t = dropperApi.newDroppoint(request);
 		
 		// verify		
-		verify(uploadFactory).createUploader(anyString(), any());
+		verify(uploadFactory).initUploader(anyString(), metadataCaptor.capture());
+
+		assertThat(uploaderName, isIn(metadataCaptor.getValue().values()));
+		
 		assertThat(t.getBody().getId().getHref(), containsString(dbId.toString()));
+		
+		assertThat(t.getBody().getId().getHref(), containsString(dbId.toString()));
+		
+	}
+	
+
+	@Test(expected = IllegalArgumentException.class)
+	public void traversalShouldntWork() throws IOException {
+
+		MultipartFile f = mock(MultipartFile.class);
+		when(f.getOriginalFilename()).thenReturn("..");
+		
+		dropperApi.addFile("test-ok", f);
+		
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testFailShouldThrow() throws IOException {
+
+		MultipartFile f = mock(MultipartFile.class);
+		when(f.getOriginalFilename()).thenReturn("b");
+		
+		dropperApi.addFile("test-fail", f);
+		
+	}
+
+
+	@Test()
+	public void testOkShouldDoNothing() throws IOException {
+
+		MultipartFile f = mock(MultipartFile.class);
+		when(f.getOriginalFilename()).thenReturn("b");
+		
+		dropperApi.addFile("test-ok", f);
 		
 	}
 	
@@ -113,19 +152,19 @@ public class DroppointsControllerTest {
 		when(f.getInputStream()).thenReturn(is);
 		when(f.getOriginalFilename()).thenReturn(filename);
 		when(f.getSize()).thenReturn(size);
-		DbDroppoints tr = new DbDroppoints();
+		DbDroppoint tr = new DbDroppoint();
 		tr.setId(Long.parseLong(tid));
 		tr.setBackEndUrl(uri);
 		when(transactionRepository.get(Long.parseLong(tid))).thenReturn(tr);
 
 		Uploader uploader = mock(Uploader.class);
-		when(uploadFactory.getUploader(uri)).thenReturn(uploader);
+		when(uploadFactory.createUploader(uri)).thenReturn(uploader);
 		
 		HttpEntity<ResultFiles> t = dropperApi.addFile(tid, f);
 		
-		verify(uploadFactory).getUploader(uri);
+		verify(uploadFactory).createUploader(uri);
 		verify(uploader).upload(filename, is);
-
+		
 		assertEquals(size, t.getBody().getFiles().get(0).getSize());
 		assertEquals(filename, t.getBody().getFiles().get(0).getName());
 		

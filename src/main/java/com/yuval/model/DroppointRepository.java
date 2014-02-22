@@ -3,11 +3,11 @@ package com.yuval.model;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class DroppointRepository extends BaseRepository<DbDroppoints> {
+public class DroppointRepository extends BaseRepository<DbDroppoint> {
 
 	@Override
-	public Class<DbDroppoints> getEntityClass() {
-		return DbDroppoints.class;
+	public Class<DbDroppoint> getEntityClass() {
+		return DbDroppoint.class;
 	}
 	
 }
