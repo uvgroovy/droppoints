@@ -1,4 +1,4 @@
-package com.yuval.api.resources;
+package com.yuval.rest.resources;
 
 public class ResultFile {
 	String name;

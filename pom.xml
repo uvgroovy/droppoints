@@ -185,6 +185,12 @@
             <scope>provided</scope>
         </dependency>
         <!-- JSON -->
+        <dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-core-asl</artifactId>
+			<version>1.9.13</version>
+		</dependency>
+		            
 		 <!-- the core, which includes Streaming API, shared low-level abstractions (but NOT data-binding) -->
 		 <dependency>
 		   <groupId>com.fasterxml.jackson.core</groupId>
@@ -295,7 +301,7 @@
         <dependency>
 			<groupId>org.springframework.hateoas</groupId>
 			<artifactId>spring-hateoas</artifactId>
-			<version>0.8.0.RELEASE</version>
+			<version>0.9.0.RELEASE</version>
 		</dependency>
         <dependency>
 			<groupId>org.springframework.plugin</groupId>

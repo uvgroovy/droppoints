@@ -27,6 +27,7 @@ function getLink(obj, rel) {
 
 
 var initDoneOnce = false;
+var initInprogress = false;
 
 function initUpload(mt, fn) {
   $('#fileupload').addClass('fileupload-processing');
@@ -42,6 +43,7 @@ function initUpload(mt, fn) {
         context: $('#fileupload')[0]
     }).always(function () {
         $(this).removeClass('fileupload-processing');
+        initInprogress = false;
     }).done(function (result) {
     	initDoneOnce = true;
         $(this).fileupload('option', 'url', getLink(result,"self"));
@@ -52,10 +54,14 @@ function initUpload(mt, fn) {
         }
     }).fail(function() {
     	$("#uploader-name")[0].disabled = false;
+		alert("Failed communicating with the server");
     });
 }
 
 function uploadNow() {
+	if (initInprogress) {
+		return;
+	}
 	submitForm = function() {$('button.start')[0].click();};
 	if (!initDoneOnce) {
 		var nameInput = $("#uploader-name")[0];
@@ -63,7 +69,8 @@ function uploadNow() {
 			alert("Please provide a name");
 			return;
 		}
-		initUpload({name: nameInput.value}, submitForm);
+		initInprogress = true;
+		initUpload({uploaderName: nameInput.value}, submitForm);
 		nameInput.disabled = true;
 	} else {
 		submitForm();

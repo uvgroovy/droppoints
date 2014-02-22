@@ -1,4 +1,4 @@
-package com.yuval.api.resources;
+package com.yuval.model;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -11,8 +11,8 @@ import javax.persistence.Table;
 
 @SuppressWarnings("serial")
 @Entity
-@Table(name = "transactions")
-public class DbTransaction implements Serializable {
+@Table(name = "droppoints")
+public class DbDroppoints implements Serializable {
 
 	@Id
 	@GeneratedValue

@@ -1,4 +1,4 @@
-package com.yuval.api.resources;
+package com.yuval.model;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
